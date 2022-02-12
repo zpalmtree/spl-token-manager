@@ -1,0 +1,23 @@
+{
+  "name": "token-manager",
+  "version": "1.0.0",
+  "main": "dist/index.js",
+  "license": "MIT",
+  "types": "dist/index.d.ts",
+  "type": "module",
+  "scripts": {
+    "start": "node dist/index.js",
+    "build": "./node_modules/.bin/tsc"
+  },
+  "files": [
+    "dist/*"
+  ],
+  "dependencies": {
+    "@solana/spl-token": "^0.1.8",
+    "@solana/web3.js": "^1.30.0",
+    "@types/node": "^16.11.4",
+    "bs58": "^4.0.1",
+    "node-fetch": "^3.1.0",
+    "typescript": "^4.4.4"
+  }
+}
