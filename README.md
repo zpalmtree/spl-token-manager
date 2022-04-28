@@ -1,8 +1,6 @@
 # spl-token-manager
 A small script to manage some common operations with tokens.
 
-* Mint a new token, given a token private key. You can use `solana-keygen` to generate this private key. 
-
 ### Configuration
 
 Modify the following variables:
