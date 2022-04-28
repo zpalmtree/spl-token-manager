@@ -14,6 +14,17 @@ import { readFile } from 'fs/promises';
 import bs58 from 'bs58';
 import fetch from 'node-fetch';
 
+/* Number of decimals for the token */
+const TOKEN_DECIMALS = 0;
+
+/* One of 'create', 'mint', 'airdrop', 'verify-airdrop' */
+const ACTION = 'create';
+
+const NODE = 'https://ssc-dao.genesysgo.net/';
+
+/* Number of tokens to mint */
+const TOKEN_SUPPLY = 100000;
+
 interface Destination {
     addr: string;
     count: number;
@@ -267,7 +278,7 @@ async function createVanityPaymentToken(
             vanityKeyPair.publicKey,
 
             /* 0 decimals */
-            0,
+            TOKEN_DECIMALS,
 
             /* Mint authority */
             walletKeyPair.publicKey,
@@ -301,14 +312,14 @@ async function createVanityPaymentToken(
 }
 
 async function loadPrivateKey(filename: string): Promise<Keypair> {
-    const { privateKey } = JSON.parse((await readFile(filename, { encoding: 'utf-8' })));
+    const privateKey = JSON.parse((await readFile(filename, { encoding: 'utf-8' })));
     const bytes = bs58.decode(privateKey);
     const wallet = Keypair.fromSecretKey(new Uint8Array(bytes));
     return wallet;
 }
 
 async function loadSeed(filename: string): Promise<Keypair> {
-    const { privateKey } = JSON.parse((await readFile(filename, { encoding: 'utf-8' })));
+    const privateKey = JSON.parse((await readFile(filename, { encoding: 'utf-8' })));
     const wallet = Keypair.fromSecretKey(new Uint8Array(privateKey));
     return wallet;
 }
@@ -321,23 +332,16 @@ async function loadDestinations(filename: string): Promise<Destination[]> {
 async function main() {
     const mint = await loadSeed('mint.json');
     const wallet = await loadSeed('privateKey.json');
-    const destinations = await loadDestinations('airdrop.json');
 
     console.log(`Mint: ${mint.publicKey.toString()}`);
     console.log(`Wallet: ${wallet.publicKey.toString()}`);
-    console.log(`Destinations: ${destinations.length}`);
 
-    const res = await fetch('https://letsalllovelain.com/solananode/');
-    const { node } = (await res.json()) as any;
-
-    const connection = new Connection(node, {
+    const connection = new Connection(NODE, {
         confirmTransactionInitialTimeout: 60 * 1000,
         commitment: 'confirmed',
     });
 
-    const action = 'airdrop' as string;
-
-    switch (action as string) {
+    switch (ACTION as string) {
         case 'create': {
             await createVanityPaymentToken(
                 wallet,
@@ -353,12 +357,14 @@ async function main() {
                 mint.publicKey,
                 connection,
                 wallet.publicKey,
-                599,
+                TOKEN_SUPPLY,
             );
 
             break;
         }
         case 'airdrop': {
+            const destinations = await loadDestinations('airdrop.json');
+
             await airdropTokens(
                 wallet,
                 mint.publicKey,
@@ -369,6 +375,8 @@ async function main() {
             break;
         }
         case 'verify-airdrop': {
+            const destinations = await loadDestinations('airdrop.json');
+
             await verifyAirdrop(
                 wallet,
                 mint.publicKey,
@@ -381,4 +389,7 @@ async function main() {
     }
 }
 
-main();
+main()
+    .catch((err) => {
+        console.log(`Error executing script: ${err.toString()}`);
+    });
